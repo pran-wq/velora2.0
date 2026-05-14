@@ -76,13 +76,51 @@ export const profileApi = {
 };
 
 // ─── Medications (mapped to legacy `medicineApi` name used by stores) ───
+// Backend uses: medicineName, reminderTime, status:lowercase, adherenceCount
+// Frontend UI expects: name, time, status:Capitalized, refillCount
+// → adapt at this boundary so existing UI works without changes.
+const capStatus = (s?: string) =>
+  s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : 'Pending';
+
+const toUiMed = (m: any) => ({
+  ...m,
+  name: m?.medicineName,
+  time: m?.reminderTime,
+  status: capStatus(m?.status),
+  refillCount: typeof m?.adherenceCount === 'number' ? m.adherenceCount : 0,
+});
+
+const toApiMed = (d: any = {}) => ({
+  medicineName: d.medicineName ?? d.name,
+  dosage: d.dosage,
+  frequency: d.frequency,
+  reminderTime: d.reminderTime ?? d.time,
+  refillDate: d.refillDate,
+});
+
 export const medicationApi = {
-  list: () => apiClient.get<{ medications: any[] }>('/api/medications'),
-  add: (data: { medicineName: string; dosage: string; frequency: string; reminderTime: string; refillDate?: string }) =>
-    apiClient.post<{ medication: any }>('/api/medications', data),
-  update: (id: string, patch: any) => apiClient.put<{ medication: any }>(`/api/medications/${id}`, patch),
+  list: async () => {
+    const { medications } = await apiClient.get<{ medications: any[] }>('/api/medications');
+    const ui = (medications || []).map(toUiMed);
+    // Existing healthStore reads `result?.medicines` — return both keys for safety.
+    return { medicines: ui, medications: ui };
+  },
+  add: async (data: any) => {
+    const { medication } = await apiClient.post<{ medication: any }>('/api/medications', toApiMed(data));
+    return { medication: toUiMed(medication), medicine: toUiMed(medication) };
+  },
+  update: async (id: string, patch: any) => {
+    const body = patch?.status
+      ? { ...toApiMed(patch), status: String(patch.status).toLowerCase() }
+      : toApiMed(patch);
+    const { medication } = await apiClient.put<{ medication: any }>(`/api/medications/${id}`, body);
+    return { medication: toUiMed(medication) };
+  },
   delete: (id: string) => apiClient.delete<{ id: string }>(`/api/medications/${id}`),
-  markTaken: (id: string) => apiClient.patch<{ medication: any }>(`/api/medications/${id}/taken`),
+  markTaken: async (id: string) => {
+    const { medication } = await apiClient.patch<{ medication: any }>(`/api/medications/${id}/taken`);
+    return { medication: toUiMed(medication) };
+  },
 };
 export const medicineApi = medicationApi; // legacy alias
 
