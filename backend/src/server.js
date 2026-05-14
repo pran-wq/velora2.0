@@ -2,6 +2,9 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
+import authRoutes from "./routes/authRoutes.js";
+import { errorHandler, notFound } from "./middleware/errorHandler.js";
+
 dotenv.config();
 
 const app = express();
@@ -20,6 +23,13 @@ app.get("/", (req, res) => {
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
+
+// API routes
+app.use("/api/auth", authRoutes);
+
+// 404 + centralized error handler (must be last)
+app.use(notFound);
+app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Medora backend listening on http://localhost:${PORT}`);
