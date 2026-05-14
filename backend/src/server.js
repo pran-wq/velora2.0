@@ -6,6 +6,7 @@ import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import medicationRoutes from "./routes/medicationRoutes.js";
 import recoveryRoutes from "./routes/recoveryRoutes.js";
+import aiRoutes from "./routes/aiRoutes.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
 
 dotenv.config();
@@ -32,6 +33,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/medications", medicationRoutes);
 app.use("/api/recovery", recoveryRoutes);
+app.use("/api/ai", aiRoutes);
 
 // 404 + centralized error handler (must be last)
 app.use(notFound);
