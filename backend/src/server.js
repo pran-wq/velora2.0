@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/authRoutes.js";
 import profileRoutes from "./routes/profileRoutes.js";
 import medicationRoutes from "./routes/medicationRoutes.js";
+import recoveryRoutes from "./routes/recoveryRoutes.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
 
 dotenv.config();
@@ -30,6 +31,7 @@ app.get("/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
 app.use("/api/medications", medicationRoutes);
+app.use("/api/recovery", recoveryRoutes);
 
 // 404 + centralized error handler (must be last)
 app.use(notFound);
