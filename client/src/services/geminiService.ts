@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { UserProfile } from "../types";
+import { aiApi } from "../lib/api";
 
 const env = (import.meta as any).env || {};
 const apiKey = (env.VITE_GEMINI_API_KEY || env.GEMINI_API_KEY || "") as string;
@@ -7,6 +8,15 @@ const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
 
 /** Stable Gemini model id for the public Generative Language API. */
 const GEMINI_MODEL = (env.VITE_GEMINI_MODEL || "gemini-2.0-flash") as string;
+
+// ─── Helpers to map frontend stats to backend AI payloads ───
+const ALLOWED_MOODS = ["great", "good", "tired", "stressed", "low"] as const;
+const clampN = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
+const normMood = (m?: string): typeof ALLOWED_MOODS[number] => {
+  const v = (m || "").toLowerCase();
+  return (ALLOWED_MOODS as readonly string[]).includes(v) ? (v as any) : "good";
+};
+const mlToHydration = (ml?: number) => clampN(Math.round((ml ?? 2000) / 300), 0, 10);
 
 async function chatViaBackend(message: string, userId: string): Promise<string | null> {
   const base = (env.VITE_API_URL || "http://localhost:3001") as string;
@@ -26,44 +36,27 @@ async function chatViaBackend(message: string, userId: string): Promise<string |
 
 export async function getDailyWellnessQuote(profile: UserProfile): Promise<string> {
   try {
-    if (!ai) return "Small steps every day lead to stronger recovery.";
-
-    const prompt = `Generate a calming, emotionally supportive, and premium wellness quote for a ${profile.age} year old ${profile.gender} user named ${profile.name}. 
-    ${profile.isPregnant ? `The user is ${profile.pregnancyMonth} months pregnant.` : ''}
-    Keep it short (under 15 words). The tone should be like a luxury wellness assistant. Avoid hospital vibes.`;
-
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents: prompt,
+    const { message } = await aiApi.motivation({
+      mood: normMood((profile as any).mood),
+      recoveryScore: 75,
     });
-
-    return response.text?.trim() || "Small steps every day lead to stronger recovery.";
+    return message;
   } catch (error) {
     console.error("AI Quote Error:", error);
-    return "Your health is a journey, not a destination. Breathe and be present.";
+    return "Small steps every day lead to stronger recovery.";
   }
 }
 
 export async function getAIHealthSummary(profile: UserProfile, stats: any): Promise<string> {
   try {
-    if (!ai) {
-      return "You're showing steady progress. Keep focusing on your hydration and rest to optimize your recovery score.";
-    }
-
-    const prompt = `Provide a very brief (2 sentences) AI health summary for ${profile.name}.
-    Context: 
-    - Recovery Score: ${stats.recoveryScore}%
-    - Adherence: ${stats.adherenceRate}%
-    - Steps: ${stats.steps}
-    Tone: Supportive, emotionally intelligent, premium.
-    Focus on positive trends or gentle encouragement.`;
-
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents: prompt,
+    const { insight } = await aiApi.wellnessSummary({
+      sleepHours: clampN(Number(stats?.sleepHours) || 7, 0, 24),
+      hydrationLevel: mlToHydration(stats?.hydrationMl),
+      mood: normMood(stats?.mood),
+      steps: clampN(Math.round(Number(stats?.steps) || 0), 0, 100000),
+      wellnessScore: clampN(Math.round(Number(stats?.recoveryScore) || 0), 0, 100),
     });
-
-    return response.text?.trim() || "You've maintained excellent consistency this week. Your activity patterns suggest a strong recovery phase.";
+    return insight;
   } catch (error) {
     console.error("AI Summary Error:", error);
     return "You're showing steady progress. Keep focusing on your hydration and rest to optimize your recovery score.";
@@ -95,40 +88,32 @@ export async function getReadinessScore(profile: UserProfile, stats: any): Promi
 
 export async function getSleepInsight(profile: UserProfile, sleepHours: number): Promise<string> {
   try {
-    if (!ai) {
-      return "Your deep sleep has improved 12% this week. Maintaining your current bedtime routine is showing positive results.";
-    }
-
-    const prompt = `Provide a brief (2 sentences) AI sleep analysis for ${profile.name} who slept ${sleepHours} hours.
-    Tone: Calming, supportive, scientifically grounded. Focus on actionable improvement or positive reinforcement.`;
-
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents: prompt,
+    const { insight } = await aiApi.recoveryInsight({
+      sleepHours: clampN(Number(sleepHours) || 7, 0, 24),
+      hydrationLevel: 7,
+      steps: 6000,
+      wellnessScore: 75,
+      mood: normMood((profile as any).mood),
+      adherenceRate: 80,
     });
-
-    return response.text?.trim() || "Your sleep patterns show healthy consistency. Consider maintaining your current routine.";
+    return insight;
   } catch (error) {
     console.error("AI Sleep Error:", error);
-    return "Your deep sleep has improved 12% this week. Maintaining your current bedtime routine is showing positive results.";
+    return "Your sleep patterns show healthy consistency. Consider maintaining your current routine.";
   }
 }
 
 export async function getStressAnalysis(profile: UserProfile): Promise<string> {
   try {
-    if (!ai) {
-      return "Your stress levels are manageable today. The morning showed slightly elevated cortisol, but your afternoon patterns normalized well.";
-    }
-
-    const prompt = `Provide a brief (2 sentences) stress analysis for ${profile.name}.
-    Tone: Calm, reassuring, practical. Include one actionable suggestion.`;
-
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents: prompt,
+    const { insight } = await aiApi.recoveryInsight({
+      sleepHours: 7,
+      hydrationLevel: 7,
+      steps: 6000,
+      wellnessScore: 70,
+      mood: normMood((profile as any).mood ?? "stressed"),
+      adherenceRate: 80,
     });
-
-    return response.text?.trim() || "Your stress response patterns are within healthy range. Consider a brief breathing exercise during peak afternoon hours.";
+    return insight;
   } catch (error) {
     console.error("AI Stress Error:", error);
     return "Your stress levels are manageable today. Try a 5-minute breathing exercise if you feel tension building.";
@@ -159,20 +144,15 @@ export async function getNutritionRecommendation(profile: UserProfile): Promise<
 
 export async function getHealthPrediction(profile: UserProfile, stats: any): Promise<string> {
   try {
-    if (!ai) {
-      return "Based on your 30-day trends, your recovery trajectory suggests reaching optimal levels within 2 weeks if current habits are maintained.";
-    }
-
-    const prompt = `Provide a brief (2 sentences) predictive health insight for ${profile.name}.
-    Stats: Recovery ${stats.recoveryScore}%, Steps ${stats.steps}, Sleep ${stats.sleepHours}h.
-    Tone: Forward-looking, motivating, data-driven. Focus on positive trajectory.`;
-
-    const response = await ai.models.generateContent({
-      model: GEMINI_MODEL,
-      contents: prompt,
+    const { insight } = await aiApi.recoveryInsight({
+      sleepHours: clampN(Number(stats?.sleepHours) || 7, 0, 24),
+      hydrationLevel: mlToHydration(stats?.hydrationMl),
+      steps: clampN(Math.round(Number(stats?.steps) || 0), 0, 100000),
+      wellnessScore: clampN(Math.round(Number(stats?.recoveryScore) || 0), 0, 100),
+      mood: normMood(stats?.mood),
+      adherenceRate: clampN(Math.round(Number(stats?.adherenceRate) || 0), 0, 100),
     });
-
-    return response.text?.trim() || "Your health trajectory is positive. Maintaining current patterns suggests improved wellness scores in the coming weeks.";
+    return insight;
   } catch (error) {
     console.error("AI Prediction Error:", error);
     return "Based on your 30-day trends, your recovery trajectory suggests reaching optimal levels within 2 weeks if current habits are maintained.";
