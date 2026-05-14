@@ -8,6 +8,7 @@ import medicationRoutes from "./routes/medicationRoutes.js";
 import recoveryRoutes from "./routes/recoveryRoutes.js";
 import aiRoutes from "./routes/aiRoutes.js";
 import recordRoutes from "./routes/recordRoutes.js";
+import analyticsRoutes from "./routes/analyticsRoutes.js";
 import { UPLOAD_DIR } from "./middleware/uploadMiddleware.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
 
@@ -37,6 +38,7 @@ app.use("/api/medications", medicationRoutes);
 app.use("/api/recovery", recoveryRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/records", recordRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 // Static: serve uploaded files (read-only)
 app.use("/uploads", express.static(UPLOAD_DIR));
