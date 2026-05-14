@@ -1,0 +1,23 @@
+{
+  "name": "aether-health",
+  "private": true,
+  "version": "1.0.0",
+  "description": "AI Healthcare Platform — Full Stack",
+  "scripts": {
+    "dev": "npm run dev:server & npm run dev:client",
+    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "cd client && npm run build",
+    "build:server": "cd server && npm run build",
+    "install:all": "cd client && npm install && cd ../server && npm install",
+    "db:push": "cd server && npx prisma db push",
+    "db:seed": "cd server && npx prisma db seed"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.105.4"
+  }
+}

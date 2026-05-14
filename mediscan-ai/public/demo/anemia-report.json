@@ -1,0 +1,14 @@
+{
+  "patientName": "Rahul Sharma",
+  "age": 32,
+  "gender": "Male",
+  "hemoglobin": 9.1,
+  "rbc": 3.8,
+  "hematocrit": 30,
+  "mcv": 72,
+  "wbc": 7200,
+  "platelets": 250000,
+  "serumIron": 32,
+  "ferritin": 10,
+  "tibc": 460
+}

@@ -1,0 +1,6 @@
+{
+  "name": "Aether Health",
+  "description": "A premium AI-powered personal health memory and wellness ecosystem.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["AI Health Intelligence", "Medicine Tracking", "Recovery Monitoring", "Prescription Scanning"]
+}
