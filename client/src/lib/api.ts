@@ -114,15 +114,31 @@ export const aiApi = {
   chat: (message: string, userId?: string) => apiClient.post('/api/ai/chat', { message, userId }), // legacy
 };
 
-// ─── Records (file uploads) ───
+// ─── Records (file uploads) — exposed as `reportApi` to match existing store/UI ───
 export const reportApi = {
-  list: () => apiClient.get<{ records: any[] }>('/api/records'),
-  upload: (file: File) => {
+  list: async () => {
+    const { records } = await apiClient.get<{ records: any[] }>('/api/records');
+    // Existing healthStore + Reports UI read `result.reports` and `record.uploadedAt`.
+    return { reports: records || [] };
+  },
+  upload: async (file: File, title?: string, type?: string) => {
     const fd = new FormData();
     fd.append('file', file);
-    return apiClient.post<{ record: any }>('/api/records/upload', fd);
+    if (title) fd.append('title', title); // ignored by backend, kept for legacy callers
+    if (type) fd.append('type', type);
+    const { record } = await apiClient.post<{ record: any }>('/api/records/upload', fd);
+    return {
+      record,
+      // Convenience aliases so the existing Reports UI can render without changes:
+      title: title || record?.originalName,
+      type: type || null,
+      uploadedAt: record?.uploadedAt,
+      url: record?.filePath ? `${API_BASE}/${record.filePath}` : null,
+    };
   },
   delete: (id: string) => apiClient.delete<{ id: string }>(`/api/records/${id}`),
+  fileUrl: (record: { filePath?: string }) =>
+    record?.filePath ? `${API_BASE}/${record.filePath}` : null,
 };
 
 // ─── Legacy stub exports (kept so existing imports compile) ───
