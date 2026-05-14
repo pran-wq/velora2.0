@@ -8,8 +8,15 @@ import { API_LIMITS } from "../utils/constants.js";
  * Mount early in server.js: app.use(...securityMiddlewares).
  */
 
+// Allow comma-separated list of origins via CORS_ORIGIN, falls back to "*".
+const parseOrigins = (raw) => {
+  if (!raw || raw === "*") return "*";
+  const list = raw.split(",").map((s) => s.trim()).filter(Boolean);
+  return list.length === 1 ? list[0] : list;
+};
+
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || "*",
+  origin: parseOrigins(process.env.CORS_ORIGIN),
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: false,

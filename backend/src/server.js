@@ -15,6 +15,7 @@ import { rateLimit } from "./middleware/rateLimiter.js";
 import { securityMiddlewares, RATE_LIMITS } from "./config/security.js";
 import { API_LIMITS } from "./utils/constants.js";
 import { API_DOCS } from "./config/apiDocs.js";
+import { FRONTEND_INTEGRATION } from "./config/frontendIntegration.js";
 import { success } from "./utils/response.js";
 
 dotenv.config();
@@ -43,6 +44,11 @@ app.get("/health", (req, res) => {
 
 // Frontend-discoverable API catalogue
 app.get("/api/docs", (req, res) => success(res, API_DOCS, "API documentation"));
+
+// Frontend integration cookbook (auth flow, snippets, pitfalls)
+app.get("/api/integration", (req, res) =>
+  success(res, FRONTEND_INTEGRATION, "Frontend integration guide")
+);
 
 // API routes (stricter limits on auth + AI)
 app.use("/api/auth", rateLimit(RATE_LIMITS.auth), authRoutes);
