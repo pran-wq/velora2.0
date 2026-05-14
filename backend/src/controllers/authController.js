@@ -6,6 +6,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { success, created, ApiError } from "../utils/response.js";
 import { generateId, sanitizeUser, formatDate } from "../utils/helpers.js";
 import { AUTH, EMAIL_REGEX, MESSAGES } from "../utils/constants.js";
+import { logger } from "../utils/logger.js";
 
 const USERS = "users";
 
@@ -53,6 +54,7 @@ export const register = asyncHandler(async (req, res) => {
   await appendItem(USERS, user);
   const token = signToken(user);
 
+  logger.info(`auth.register: ${normalizedEmail}`);
   return created(res, { token, user: sanitizeUser(user) }, "Registered");
 });
 
@@ -72,6 +74,7 @@ export const login = asyncHandler(async (req, res) => {
   if (!ok) throw new ApiError(MESSAGES.invalidCredentials, 401);
 
   const token = signToken(user);
+  logger.info(`auth.login: ${normalizedEmail}`);
   return success(res, { token, user: sanitizeUser(user) }, "Logged in");
 });
 

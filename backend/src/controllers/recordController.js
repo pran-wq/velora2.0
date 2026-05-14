@@ -32,6 +32,7 @@ export const uploadRecord = asyncHandler(async (req, res) => {
   };
 
   await appendItem(RECORDS, record);
+  logger.info(`record.upload: user=${req.user.id} file=${record.fileName} size=${record.size}`);
   return created(res, { record }, "Record uploaded");
 });
 

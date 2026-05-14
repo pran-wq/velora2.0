@@ -41,6 +41,7 @@ export const generateContent = async (prompt) => {
 
   try {
     const model = getModel();
+    logger.info(`ai.generate: model=${MODEL} promptLen=${prompt.length}`);
     const result = await model.generateContent(prompt);
     const text = result?.response?.text?.();
     if (!text) throw new ApiError("Empty AI response", 502);
