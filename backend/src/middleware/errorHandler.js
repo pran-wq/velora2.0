@@ -11,7 +11,8 @@ export const notFound = (req, res, next) => {
 // Centralized error handler — mount last.
 export const errorHandler = (err, req, res, next) => {
   const status = err.status || 500;
-  logger.error(err.message, status === 500 ? err.stack : "");
+  const log = status >= 500 ? logger.error : logger.warn;
+  log(err.message, status === 500 ? err.stack : "");
   res.status(status).json({
     success: false,
     message: err.message || "Internal Server Error",
