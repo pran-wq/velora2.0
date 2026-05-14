@@ -14,6 +14,8 @@ import { errorHandler, notFound } from "./middleware/errorHandler.js";
 import { rateLimit } from "./middleware/rateLimiter.js";
 import { securityMiddlewares, RATE_LIMITS } from "./config/security.js";
 import { API_LIMITS } from "./utils/constants.js";
+import { API_DOCS } from "./config/apiDocs.js";
+import { success } from "./utils/response.js";
 
 dotenv.config();
 
@@ -38,6 +40,9 @@ app.get("/", (req, res) => {
 app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
+
+// Frontend-discoverable API catalogue
+app.get("/api/docs", (req, res) => success(res, API_DOCS, "API documentation"));
 
 // API routes (stricter limits on auth + AI)
 app.use("/api/auth", rateLimit(RATE_LIMITS.auth), authRoutes);
