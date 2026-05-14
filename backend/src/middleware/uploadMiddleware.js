@@ -4,22 +4,17 @@ import fs from "fs";
 import crypto from "crypto";
 import { fileURLToPath } from "url";
 
+import {
+  UPLOAD_MIME_TYPES,
+  UPLOAD_EXTENSIONS,
+  UPLOAD_LIMITS,
+} from "../utils/constants.js";
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export const UPLOAD_DIR = path.join(__dirname, "..", "uploads");
 
 // Ensure uploads dir exists
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-
-const ALLOWED_MIME = new Set([
-  "application/pdf",
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-]);
-
-const ALLOWED_EXT = new Set([".pdf", ".jpg", ".jpeg", ".png"]);
-
-const MAX_BYTES = 5 * 1024 * 1024; // 5MB
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
@@ -32,7 +27,7 @@ const storage = multer.diskStorage({
 
 const fileFilter = (_req, file, cb) => {
   const ext = path.extname(file.originalname).toLowerCase();
-  if (!ALLOWED_MIME.has(file.mimetype) || !ALLOWED_EXT.has(ext)) {
+  if (!UPLOAD_MIME_TYPES.has(file.mimetype) || !UPLOAD_EXTENSIONS.has(ext)) {
     const err = new Error("Unsupported file type. Allowed: pdf, jpg, jpeg, png");
     err.status = 400;
     return cb(err, false);
@@ -43,7 +38,7 @@ const fileFilter = (_req, file, cb) => {
 export const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: MAX_BYTES, files: 1 },
+  limits: { fileSize: UPLOAD_LIMITS.maxBytes, files: 1 },
 });
 
 // Wrap multer single() to convert its errors to our ApiError shape.

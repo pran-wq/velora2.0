@@ -13,6 +13,7 @@ import { UPLOAD_DIR } from "./middleware/uploadMiddleware.js";
 import { errorHandler, notFound } from "./middleware/errorHandler.js";
 import { rateLimit } from "./middleware/rateLimiter.js";
 import { securityMiddlewares, RATE_LIMITS } from "./config/security.js";
+import { API_LIMITS } from "./utils/constants.js";
 
 dotenv.config();
 
@@ -23,8 +24,8 @@ const PORT = process.env.PORT || 5000;
 app.use(...securityMiddlewares);
 
 // Body parsers
-app.use(express.json({ limit: "1mb" }));
-app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+app.use(express.json({ limit: API_LIMITS.jsonBody }));
+app.use(express.urlencoded({ extended: true, limit: API_LIMITS.jsonBody }));
 
 // Global rate limit
 app.use(rateLimit(RATE_LIMITS.global));

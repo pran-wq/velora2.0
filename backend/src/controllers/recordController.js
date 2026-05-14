@@ -1,4 +1,3 @@
-import crypto from "crypto";
 import { promises as fs } from "fs";
 import path from "path";
 
@@ -6,6 +5,7 @@ import { readJSON, appendItem, removeItem } from "../utils/storage.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { success, created, ApiError } from "../utils/response.js";
 import { logger } from "../utils/logger.js";
+import { generateId, formatDate } from "../utils/helpers.js";
 import { UPLOAD_DIR } from "../middleware/uploadMiddleware.js";
 
 const RECORDS = "records";
@@ -21,14 +21,14 @@ export const uploadRecord = asyncHandler(async (req, res) => {
   if (!req.file) throw new ApiError("No file uploaded (field: 'file')", 400);
 
   const record = {
-    id: crypto.randomUUID(),
+    id: generateId(),
     userId: req.user.id,
     originalName: sanitizeName(req.file.originalname),
     fileName: req.file.filename,
     filePath: path.join("uploads", req.file.filename), // relative path
     mimeType: req.file.mimetype,
     size: req.file.size,
-    uploadedAt: new Date().toISOString(),
+    uploadedAt: formatDate(),
   };
 
   await appendItem(RECORDS, record);

@@ -8,8 +8,7 @@ import {
   motivationPrompt,
   AI_DISCLAIMER,
 } from "../utils/promptTemplates.js";
-
-const ALLOWED_MOODS = ["great", "good", "tired", "stressed", "low"];
+import { MOODS } from "../utils/constants.js";
 
 // ---------- light validators ----------
 const reqNum = (v, name, min, max) => {
@@ -20,8 +19,8 @@ const reqNum = (v, name, min, max) => {
 };
 
 const reqMood = (v) => {
-  if (typeof v !== "string" || !ALLOWED_MOODS.includes(v))
-    throw new ApiError(`mood must be one of: ${ALLOWED_MOODS.join(", ")}`, 400);
+  if (typeof v !== "string" || !MOODS.includes(v))
+    throw new ApiError(`mood must be one of: ${MOODS.join(", ")}`, 400);
   return v;
 };
 

@@ -1,5 +1,3 @@
-import crypto from "crypto";
-
 import {
   readJSON,
   appendItem,
@@ -8,25 +6,22 @@ import {
 } from "../utils/storage.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { success, created, ApiError } from "../utils/response.js";
+import { generateId, formatDate, clamp } from "../utils/helpers.js";
+import { MOODS, MOOD_SCORES, RECOVERY_RANGES } from "../utils/constants.js";
 
 const RECOVERY = "recovery";
 
-const MOOD_SCORES = { great: 25, good: 20, tired: 12, stressed: 8, low: 5 };
-const ALLOWED_MOODS = Object.keys(MOOD_SCORES);
-
 // ---------- scoring helper ----------
 // Lightweight wellness score in 0–100 from 4 equal-weight factors (25 each).
-const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
-
 const sleepPoints = (h) => {
-  // optimal 7–9h => full 25; falls off linearly outside [4, 12]
-  if (h >= 7 && h <= 9) return 25;
-  if (h < 7) return clamp(((h - 4) / 3) * 25, 0, 25);
+  const { optimalMin, optimalMax } = RECOVERY_RANGES.sleepHours;
+  if (h >= optimalMin && h <= optimalMax) return 25;
+  if (h < optimalMin) return clamp(((h - 4) / 3) * 25, 0, 25);
   return clamp(((12 - h) / 3) * 25, 0, 25);
 };
 
-const hydrationPoints = (level) => clamp((level / 10) * 25, 0, 25);
-const stepsPoints = (steps) => clamp((steps / 10000) * 25, 0, 25);
+const hydrationPoints = (level) => clamp((level / RECOVERY_RANGES.hydrationLevel.max) * 25, 0, 25);
+const stepsPoints = (steps) => clamp((steps / RECOVERY_RANGES.stepsTarget) * 25, 0, 25);
 const moodPoints = (mood) => MOOD_SCORES[mood] ?? 0;
 
 export const computeWellnessScore = ({ sleepHours, hydrationLevel, steps, mood }) =>
@@ -41,20 +36,21 @@ export const computeWellnessScore = ({ sleepHours, hydrationLevel, steps, mood }
 const validateEntry = (body, partial = false) => {
   const { sleepHours, hydrationLevel, steps, mood, notes } = body || {};
   const patch = {};
+  const { sleepHours: SH, hydrationLevel: HL } = RECOVERY_RANGES;
 
   if (sleepHours !== undefined) {
     const n = Number(sleepHours);
-    if (!Number.isFinite(n) || n < 0 || n > 24)
-      throw new ApiError("sleepHours must be 0–24", 400);
+    if (!Number.isFinite(n) || n < SH.min || n > SH.max)
+      throw new ApiError(`sleepHours must be ${SH.min}–${SH.max}`, 400);
     patch.sleepHours = n;
   } else if (!partial) throw new ApiError("sleepHours is required", 400);
 
   if (hydrationLevel !== undefined) {
     const n = Number(hydrationLevel);
-    if (!Number.isFinite(n) || n < 0 || n > 10)
-      throw new ApiError("hydrationLevel must be 0–10", 400);
+    if (!Number.isFinite(n) || n < HL.min || n > HL.max)
+      throw new ApiError(`hydrationLevel must be ${HL.min}–${HL.max}`, 400);
     patch.hydrationLevel = n;
-  } else if (!partial) throw new ApiError("hydrationLevel is required (0–10)", 400);
+  } else if (!partial) throw new ApiError(`hydrationLevel is required (${HL.min}–${HL.max})`, 400);
 
   if (steps !== undefined) {
     const n = Number(steps);
@@ -64,8 +60,8 @@ const validateEntry = (body, partial = false) => {
   } else if (!partial) throw new ApiError("steps is required", 400);
 
   if (mood !== undefined) {
-    if (typeof mood !== "string" || !ALLOWED_MOODS.includes(mood))
-      throw new ApiError(`mood must be one of: ${ALLOWED_MOODS.join(", ")}`, 400);
+    if (typeof mood !== "string" || !MOODS.includes(mood))
+      throw new ApiError(`mood must be one of: ${MOODS.join(", ")}`, 400);
     patch.mood = mood;
   } else if (!partial) throw new ApiError("mood is required", 400);
 
@@ -94,12 +90,12 @@ export const addRecovery = asyncHandler(async (req, res) => {
   const fields = validateEntry(req.body, false);
 
   const entry = {
-    id: crypto.randomUUID(),
+    id: generateId(),
     userId: req.user.id,
     ...fields,
     notes: fields.notes ?? null,
     wellnessScore: computeWellnessScore(fields),
-    createdAt: new Date().toISOString(),
+    createdAt: formatDate(),
   };
 
   await appendItem(RECOVERY, entry);
@@ -125,7 +121,7 @@ export const updateRecovery = asyncHandler(async (req, res) => {
 
   const merged = { ...existing, ...patch };
   patch.wellnessScore = computeWellnessScore(merged);
-  patch.updatedAt = new Date().toISOString();
+  patch.updatedAt = formatDate();
 
   const updated = await updateItem(
     RECOVERY,

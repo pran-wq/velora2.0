@@ -1,16 +1,10 @@
 import { updateItem } from "../utils/storage.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { success, ApiError } from "../utils/response.js";
+import { sanitizeUser, formatDate, safeNumber } from "../utils/helpers.js";
+import { GENDERS } from "../utils/constants.js";
 
 const USERS = "users";
-
-const ALLOWED_GENDERS = ["male", "female", "other", "prefer_not_to_say"];
-
-const sanitize = (user) => {
-  if (!user) return null;
-  const { password, ...safe } = user;
-  return safe;
-};
 
 // GET /api/profile — return the authenticated user (req.user is already sanitized by authMiddleware)
 export const getProfile = asyncHandler(async (req, res) => {
@@ -29,15 +23,15 @@ export const updateProfile = asyncHandler(async (req, res) => {
   }
 
   if (age !== undefined) {
-    const n = Number(age);
-    if (!Number.isInteger(n) || n < 0 || n > 130)
+    const n = safeNumber(age, { min: 0, max: 130 });
+    if (n === null || !Number.isInteger(n))
       throw new ApiError("Invalid age", 400);
     patch.age = n;
   }
 
   if (gender !== undefined) {
-    if (typeof gender !== "string" || !ALLOWED_GENDERS.includes(gender.toLowerCase()))
-      throw new ApiError(`gender must be one of: ${ALLOWED_GENDERS.join(", ")}`, 400);
+    if (typeof gender !== "string" || !GENDERS.includes(gender.toLowerCase()))
+      throw new ApiError(`gender must be one of: ${GENDERS.join(", ")}`, 400);
     patch.gender = gender.toLowerCase();
   }
 
@@ -56,10 +50,10 @@ export const updateProfile = asyncHandler(async (req, res) => {
   if (Object.keys(patch).length === 0)
     throw new ApiError("No valid fields provided to update", 400);
 
-  patch.updatedAt = new Date().toISOString();
+  patch.updatedAt = formatDate();
 
   const updated = await updateItem(USERS, (u) => u.id === req.user.id, patch);
   if (!updated) throw new ApiError("User not found", 404);
 
-  return success(res, { user: sanitize(updated) }, "Profile updated");
+  return success(res, { user: sanitizeUser(updated) }, "Profile updated");
 });

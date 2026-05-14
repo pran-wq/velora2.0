@@ -1,6 +1,8 @@
 import helmet from "helmet";
 import cors from "cors";
 
+import { API_LIMITS } from "../utils/constants.js";
+
 /**
  * Centralized security middleware setup.
  * Mount early in server.js: app.use(...securityMiddlewares).
@@ -22,9 +24,9 @@ const helmetOptions = {
 
 export const securityMiddlewares = [helmet(helmetOptions), cors(corsOptions)];
 
-// Rate-limit presets — tune via env if needed.
+// Rate-limit presets — sourced from central constants.
 export const RATE_LIMITS = {
-  global: { windowMs: 60_000, max: 120 }, // 120 req/min/ip
-  auth: { windowMs: 15 * 60_000, max: 20 }, // 20 req / 15 min / ip
-  ai: { windowMs: 60_000, max: 10 }, // 10 req/min/ip
+  global: API_LIMITS.rateGlobal,
+  auth: API_LIMITS.rateAuth,
+  ai: API_LIMITS.rateAi,
 };

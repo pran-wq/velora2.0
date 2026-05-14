@@ -1,6 +1,7 @@
 import { readJSON } from "../utils/storage.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { success } from "../utils/response.js";
+import { calculatePercentage, average, sortByCreatedAsc } from "../utils/helpers.js";
 
 const MEDS = "medications";
 const RECOVERY = "recovery";
@@ -17,23 +18,15 @@ const loadUserData = async (userId) => {
   };
 };
 
-const pct = (num, den) => (den > 0 ? Math.round((num / den) * 100) : 0);
-
-const avg = (nums) =>
-  nums.length ? Math.round(nums.reduce((a, b) => a + b, 0) / nums.length) : 0;
-
-const sortByCreatedAsc = (list) =>
-  [...list].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-
 // ---------- GET /api/analytics/dashboard ----------
 export const dashboard = asyncHandler(async (req, res) => {
   const { meds, recovery } = await loadUserData(req.user.id);
 
   const totalMedications = meds.length;
   const medicationsTaken = meds.filter((m) => m.status === "taken").length;
-  const adherencePercentage = pct(medicationsTaken, totalMedications);
+  const adherencePercentage = calculatePercentage(medicationsTaken, totalMedications);
 
-  const averageWellnessScore = avg(recovery.map((r) => r.wellnessScore || 0));
+  const averageWellnessScore = average(recovery.map((r) => r.wellnessScore || 0));
 
   const sortedRecovery = sortByCreatedAsc(recovery);
   const latest = sortedRecovery[sortedRecovery.length - 1] || null;
@@ -85,7 +78,7 @@ export const adherence = asyncHandler(async (req, res) => {
       taken,
       missed,
       pending,
-      adherencePercentage: pct(taken, total),
+      adherencePercentage: calculatePercentage(taken, total),
     },
     "Medication adherence stats"
   );

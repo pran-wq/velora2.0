@@ -1,5 +1,3 @@
-import crypto from "crypto";
-
 import {
   readJSON,
   writeJSON,
@@ -9,21 +7,14 @@ import {
 } from "../utils/storage.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { success, created, ApiError } from "../utils/response.js";
+import { generateId, formatDate } from "../utils/helpers.js";
+import {
+  MED_FREQUENCIES,
+  MED_STATUSES,
+  TIME_REGEX,
+} from "../utils/constants.js";
 
 const MEDS = "medications";
-
-const ALLOWED_FREQUENCIES = [
-  "once_daily",
-  "twice_daily",
-  "thrice_daily",
-  "four_times_daily",
-  "weekly",
-  "as_needed",
-];
-
-const ALLOWED_STATUSES = ["pending", "taken", "missed"];
-
-const timeRe = /^([01]\d|2[0-3]):[0-5]\d$/; // HH:MM 24h
 
 const validateMed = (body, partial = false) => {
   const { medicineName, dosage, frequency, reminderTime, refillDate, status } =
@@ -47,9 +38,9 @@ const validateMed = (body, partial = false) => {
   }
 
   if (frequency !== undefined) {
-    if (!ALLOWED_FREQUENCIES.includes(frequency))
+    if (!MED_FREQUENCIES.includes(frequency))
       throw new ApiError(
-        `frequency must be one of: ${ALLOWED_FREQUENCIES.join(", ")}`,
+        `frequency must be one of: ${MED_FREQUENCIES.join(", ")}`,
         400
       );
     patch.frequency = frequency;
@@ -58,7 +49,7 @@ const validateMed = (body, partial = false) => {
   }
 
   if (reminderTime !== undefined) {
-    if (typeof reminderTime !== "string" || !timeRe.test(reminderTime))
+    if (typeof reminderTime !== "string" || !TIME_REGEX.test(reminderTime))
       throw new ApiError("reminderTime must be HH:MM (24h)", 400);
     patch.reminderTime = reminderTime;
   } else if (!partial) {
@@ -77,9 +68,9 @@ const validateMed = (body, partial = false) => {
   }
 
   if (status !== undefined) {
-    if (!ALLOWED_STATUSES.includes(status))
+    if (!MED_STATUSES.includes(status))
       throw new ApiError(
-        `status must be one of: ${ALLOWED_STATUSES.join(", ")}`,
+        `status must be one of: ${MED_STATUSES.join(", ")}`,
         400
       );
     patch.status = status;
@@ -93,13 +84,13 @@ export const addMedication = asyncHandler(async (req, res) => {
   const fields = validateMed(req.body, false);
 
   const med = {
-    id: crypto.randomUUID(),
+    id: generateId(),
     userId: req.user.id,
     ...fields,
     status: fields.status || "pending",
     adherenceCount: 0,
     refillDate: fields.refillDate ?? null,
-    createdAt: new Date().toISOString(),
+    createdAt: formatDate(),
   };
 
   await appendItem(MEDS, med);
@@ -130,7 +121,7 @@ export const updateMedication = asyncHandler(async (req, res) => {
   if (Object.keys(patch).length === 0)
     throw new ApiError("No valid fields provided to update", 400);
 
-  patch.updatedAt = new Date().toISOString();
+  patch.updatedAt = formatDate();
 
   const updated = await updateItem(
     MEDS,
@@ -160,7 +151,7 @@ export const markAsTaken = asyncHandler(async (req, res) => {
     ...all[idx],
     status: "taken",
     adherenceCount: (all[idx].adherenceCount || 0) + 1,
-    lastTakenAt: new Date().toISOString(),
+    lastTakenAt: formatDate(),
   };
   await writeJSON(MEDS, all);
 
