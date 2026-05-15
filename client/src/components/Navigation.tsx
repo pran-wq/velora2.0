@@ -1,4 +1,4 @@
-import { Home, HeartPulse, Brain, User, ShieldCheck, Stethoscope } from 'lucide-react';
+import { Home, HeartPulse, User, ShieldCheck, Stethoscope } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import { motion } from 'framer-motion';
@@ -9,7 +9,6 @@ const navItems = [
   { icon: HeartPulse, label: 'Health', path: '/health' },
   { icon: Stethoscope, label: 'Predict', path: '/predict' },
   { icon: ShieldCheck, label: 'Vault', path: '/vault' },
-  { icon: Brain, label: 'Insights', path: '/insights' },
   { icon: User, label: 'Profile', path: '/profile' },
 ];
 

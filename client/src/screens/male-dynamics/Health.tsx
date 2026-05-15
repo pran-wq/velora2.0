@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { 
-  Heart, Activity, Droplets, Moon, Dumbbell, Brain, Zap, Utensils, Flame, ShieldAlert, Battery,
-  X, Play, CheckCircle, Timer, Wind
+  Heart, Activity, Droplets, Moon, Brain, Zap, Utensils, Battery, Flame,
+  X, Play, Timer, Wind
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -52,50 +52,7 @@ export default function MaleHealth() {
           </div>
         </section>
 
-        {/* SECTION 2 - HORMONAL WELLNESS */}
-        <section className="space-y-6">
-          <h3 className="text-sm font-bold uppercase tracking-widest text-[#64748B] pl-2 border-l-4 border-[#F472B6]">Hormonal Wellness</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-2 bg-white rounded-[32px] p-8 shadow-sm border border-gray-50 flex flex-col justify-center">
-               <div className="flex items-center gap-3 mb-6">
-                 <div className="w-12 h-12 bg-[#818CF8]/10 rounded-2xl flex items-center justify-center text-[#818CF8]">
-                   <Activity size={24} />
-                 </div>
-                 <div>
-                   <h4 className="text-lg font-bold text-[#0F172A]">Testosterone Baseline</h4>
-                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Hormonal Profile</p>
-                 </div>
-               </div>
-               <div className="flex items-baseline gap-2 mb-4">
-                 <span className="text-4xl font-bold text-[#0F172A]">{Math.round(stats.recoveryScore * 7.6)}</span>
-                 <span className="text-sm font-bold text-gray-400">ng/dL</span>
-                 <span className="ml-4 px-3 py-1 bg-[#10B981]/10 text-[#10B981] rounded-lg text-xs font-bold">{stats.recoveryScore > 80 ? 'Optimal' : stats.recoveryScore > 70 ? 'Normal' : 'Low'}</span>
-               </div>
-               <p className="text-sm text-[#475569] leading-relaxed max-w-lg">
-                 Your baseline is solid. Consistent sleep patterns and your recent increase in zinc intake have positively impacted your hormonal wellness. Avoid aggressive overtraining to maintain this balance.
-               </p>
-            </div>
-            <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-50 flex flex-col justify-between">
-               <h4 className="font-bold text-[#0F172A] mb-4">Stress Correlation</h4>
-               <div className="space-y-4">
-                 <div className="flex items-center justify-between">
-                   <span className="text-sm font-bold text-[#475569]">Cortisol Load</span>
-                   <span className="text-sm font-bold text-[#34D399]">Normal</span>
-                 </div>
-                 <div className="w-full h-2 bg-[#F1F5F9] rounded-full overflow-hidden">
-                   <div className="h-full bg-[#34D399] rounded-full w-[40%]" />
-                 </div>
-               </div>
-               <div className="mt-6 p-4 bg-[#F8FAFC] rounded-2xl border border-gray-100">
-                 <p className="text-[11px] text-[#64748B] leading-relaxed">
-                   Cortisol curve shows healthy morning spikes and evening tapers. Energy optimization is functioning well.
-                 </p>
-               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* SECTION 3 - RECOVERY TRACKING */}
+        {/* SECTION 2 - RECOVERY TRACKING */}
         <section className="space-y-6">
           <h3 className="text-sm font-bold uppercase tracking-widest text-[#64748B] pl-2 border-l-4 border-[#34D399]">Recovery Tracking</h3>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -124,7 +81,7 @@ export default function MaleHealth() {
           </div>
         </section>
 
-        {/* SECTION 4 - NUTRITION */}
+        {/* SECTION 3 - NUTRITION */}
         <section className="space-y-6">
           <h3 className="text-sm font-bold uppercase tracking-widest text-[#64748B] pl-2 border-l-4 border-[#FBBF24]">Nutrition</h3>
           <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-50">
@@ -176,39 +133,7 @@ export default function MaleHealth() {
           </div>
         </section>
 
-        {/* SECTION 5 - EXERCISE TRACKING */}
-        <section className="space-y-6">
-          <h3 className="text-sm font-bold uppercase tracking-widest text-[#64748B] pl-2 border-l-4 border-[#EF4444]">Exercise Tracking</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-             {[
-               { title: 'Upper Body Power', type: 'Gym Workout', duration: '45 min', img: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&q=80&w=400' },
-               { title: 'Active Mobility', type: 'Recovery Training', duration: '20 min', img: 'https://images.unsplash.com/photo-1599058945522-28d584b6f4ff?auto=format&fit=crop&q=80&w=400' },
-             ].map((ex, i) => (
-               <div 
-                 key={i} 
-                 onClick={() => navigate('/workouts')}
-                 className="group relative overflow-hidden rounded-[32px] bg-white shadow-sm hover:shadow-xl transition-all cursor-pointer h-72 border border-gray-50 flex items-end p-8"
-               >
-                  <img src={ex.img} alt={ex.title} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-90" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/90 via-[#0F172A]/40 to-transparent" />
-                  <div className="relative z-10 text-white w-full">
-                     <div className="flex justify-between items-end">
-                       <div>
-                         <p className="text-[10px] font-bold uppercase tracking-widest text-[#94A3B8] mb-1">{ex.type}</p>
-                         <h4 className="text-2xl font-bold">{ex.title}</h4>
-                         <p className="text-xs font-medium text-[#CBD5E1] mt-2">{ex.duration} • AI Recommended</p>
-                       </div>
-                       <div className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/20 group-hover:bg-white group-hover:text-[#0F172A] transition-colors">
-                         <Dumbbell size={18} />
-                       </div>
-                     </div>
-                  </div>
-               </div>
-             ))}
-          </div>
-        </section>
-
-        {/* SECTION 6 - MENTAL WELLNESS */}
+        {/* SECTION 4 - MENTAL WELLNESS */}
         <section className="space-y-6">
           <h3 className="text-sm font-bold uppercase tracking-widest text-[#64748B] pl-2 border-l-4 border-[#A78BFA]">Mental Wellness</h3>
           <div className="bg-gradient-to-br from-[#F8FAFC] to-white rounded-[32px] p-8 shadow-sm border border-gray-50">

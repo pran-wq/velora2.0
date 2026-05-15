@@ -62,18 +62,19 @@ export default function MaleReports() {
   if (!profile) return null;
 
   const allReports = reports && reports.length > 0 ? reports : localFallback;
+  const safeReports = Array.isArray(allReports) ? allReports : [];
 
   const vaultCategories = [
-    { label: 'All Files', count: allReports.length, icon: Grid, color: '#64748B', key: 'All Files' },
-    { label: 'Prescriptions', count: allReports.filter((r: any) => r.type?.toLowerCase() === 'prescription').length, icon: Pill, color: '#10B981', key: 'Prescription' },
-    { label: 'Lab Reports', count: allReports.filter((r: any) => r.type?.toLowerCase().includes('report')).length, icon: FileText, color: '#6366F1', key: 'LabReport' },
-    { label: 'Scans & X-Rays', count: allReports.filter((r: any) => r.type?.toLowerCase() === 'scan').length, icon: ScanLine, color: '#EC4899', key: 'Scan' },
+    { label: 'All Files', count: safeReports.length, icon: Grid, color: '#64748B', key: 'All Files' },
+    { label: 'Prescriptions', count: safeReports.filter((r: any) => (r.type || '').toLowerCase() === 'prescription').length, icon: Pill, color: '#10B981', key: 'Prescription' },
+    { label: 'Lab Reports', count: safeReports.filter((r: any) => (r.type || '').toLowerCase().includes('report')).length, icon: FileText, color: '#6366F1', key: 'LabReport' },
+    { label: 'Scans & X-Rays', count: safeReports.filter((r: any) => (r.type || '').toLowerCase() === 'scan').length, icon: ScanLine, color: '#EC4899', key: 'Scan' },
   ];
 
-  const filteredReports = allReports.filter((r: any) => {
+  const filteredReports = safeReports.filter((r: any) => {
     if (activeCategory === 'All Files') return true;
-    if (activeCategory === 'LabReport') return r.type?.toLowerCase().includes('report');
-    return r.type?.toLowerCase() === activeCategory.toLowerCase();
+    if (activeCategory === 'LabReport') return (r.type || '').toLowerCase().includes('report');
+    return (r.type || '').toLowerCase() === activeCategory.toLowerCase();
   });
 
 
@@ -262,7 +263,7 @@ export default function MaleReports() {
                               </span>
                             </div>
                             <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest whitespace-nowrap">
-                              {record.date || (record.uploadedAt ? new Date(record.uploadedAt).toLocaleDateString() : 'Today')}
+                              {record.date || (record.uploadedAt ? new Date(record.uploadedAt).toLocaleDateString() : 'Just now')}
                             </span>
                           </div>
                           <p className="text-sm text-[#64748B] font-medium leading-relaxed">{record.aiInsight || record.summary || 'Ready for review.'}</p>

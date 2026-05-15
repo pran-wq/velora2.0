@@ -341,7 +341,7 @@ export default function PregnancyHealth() {
             <div className="flex justify-between items-end px-2">
                <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">Holistic Wellness Articles</h3>
                <button 
-                 onClick={() => navigate('/insights')}
+                 onClick={() => navigate('/predict')}
                  className="text-xs font-bold text-[#FF8BA7] hover:underline"
                >
                  View Feed

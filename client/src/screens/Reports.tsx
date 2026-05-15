@@ -54,17 +54,18 @@ export default function Reports() {
   // All reports: API + local fallback
   const allReports = apiReports.length > 0 ? apiReports : records;
 
+  const safeReports = Array.isArray(allReports) ? allReports : [];
   const vaultCategories = [
-    { label: 'All Files', count: allReports.length, icon: Grid, color: '#64748B', key: 'All Files' },
-    { label: 'Prescriptions', count: allReports.filter((r: any) => r.type?.toLowerCase() === 'prescription').length, icon: Pill, color: '#10B981', key: 'Prescription' },
-    { label: 'Lab Reports', count: allReports.filter((r: any) => r.type?.toLowerCase().includes('report')).length, icon: FileText, color: accent, key: 'LabReport' },
-    { label: 'Scans & Scopes', count: allReports.filter((r: any) => r.type?.toLowerCase() === 'scan').length, icon: ScanLine, color: '#EC4899', key: 'Scan' },
+    { label: 'All Files', count: safeReports.length, icon: Grid, color: '#64748B', key: 'All Files' },
+    { label: 'Prescriptions', count: safeReports.filter((r: any) => (r.type || '').toLowerCase() === 'prescription').length, icon: Pill, color: '#10B981', key: 'Prescription' },
+    { label: 'Lab Reports', count: safeReports.filter((r: any) => (r.type || '').toLowerCase().includes('report')).length, icon: FileText, color: accent, key: 'LabReport' },
+    { label: 'Scans & Scopes', count: safeReports.filter((r: any) => (r.type || '').toLowerCase() === 'scan').length, icon: ScanLine, color: '#EC4899', key: 'Scan' },
   ];
 
-  const filteredReports = allReports.filter((r: any) => {
+  const filteredReports = safeReports.filter((r: any) => {
     if (activeCategory === 'All Files') return true;
-    if (activeCategory === 'LabReport') return r.type?.toLowerCase().includes('report');
-    return r.type?.toLowerCase() === activeCategory.toLowerCase();
+    if (activeCategory === 'LabReport') return (r.type || '').toLowerCase().includes('report');
+    return (r.type || '').toLowerCase() === activeCategory.toLowerCase();
   });
 
   const handleFileSelect = useCallback(async (files: FileList | null) => {
@@ -126,7 +127,7 @@ export default function Reports() {
     : [
         { title: 'Abnormality Detection', value: 'Low', unit: 'risk', icon: ShieldCheck, note: 'Recent values stay inside expected range.' },
         { title: 'Medicine Guidance', value: '98', unit: '% clear', icon: Pill, note: 'Adherence and refill timing look strong.' },
-        { title: 'Health Timeline', value: allReports.length.toString(), unit: 'items', icon: Activity, note: 'Records are ready for trend analysis.' },
+        { title: 'Health Timeline', value: (safeReports.length || 0).toString(), unit: 'items', icon: Activity, note: 'Records are ready for trend analysis.' },
       ];
 
   const showHeader = displayMode === 'all' || displayMode === 'timeline' || displayMode === 'prescriptions';
@@ -376,7 +377,7 @@ export default function Reports() {
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
                           <h3 className="font-bold text-[#2D2D2D] truncate pr-2">{record.title}</h3>
                           <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest bg-gray-50 px-2 py-0.5 rounded border shrink-0 whitespace-nowrap">
-                            {record.date || record.uploadedAt?.split('T')[0]}
+                            {record.date || (record.uploadedAt ? record.uploadedAt.split('T')[0] : 'Today')}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 mb-2">
@@ -387,7 +388,7 @@ export default function Reports() {
                            {record.status === 'completed' && <span className="text-[9px] font-bold text-emerald-500 bg-emerald-50 px-2 py-0.5 rounded flex items-center gap-1"><Sparkles size={10} /> AI Analyzed</span>}
                         </div>
                         <p className="text-sm text-gray-500 font-medium leading-relaxed line-clamp-2">
-                          {record.summary || (record.aiAnalysis as any)?.summary || 'AI synthesis in progress.'}
+                          {record.summary || record.aiInsight || (record.aiAnalysis as any)?.summary || 'AI synthesis in progress.'}
                         </p>
                       </div>
                     </motion.div>

@@ -1,60 +1,55 @@
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+const OLLAMA_URL = 'http://localhost:11434/api/generate';
+const OLLAMA_MODEL = 'mistral';
 
-const SYSTEM_INSTRUCTION = `
-You are Aether AI, a premium healthcare intelligence assistant.
-Your goal is to provide accurate, empathetic, and actionable health insights.
-Always maintain a professional yet warm tone.
-If you are unsure about a medical fact, suggest consulting a healthcare professional.
-`;
+const SYSTEM_INSTRUCTION = `You are an AI healthcare assistant for preventive healthcare and outbreak awareness.
+Provide concise, safe, non-alarming medical guidance.
+Never claim to replace doctors or issue a definitive diagnosis.
+Always recommend professional consultation for serious or worsening symptoms.
+If asked about non-health topics, briefly refuse and steer back to wellness.
+For outbreaks, give general public-health context only—do not invent official alerts.`;
 
-export async function generateChatResponse(message: string, history: { role: 'user' | 'model'; parts: { text: string }[] }[]) {
-  if (!GEMINI_API_KEY) {
-    return 'Add GEMINI_API_KEY to the server .env to enable live AI replies. Until then, focus on steady sleep, hydration, and gentle movement today.';
-  }
-
-  const payload = {
-    contents: [
-      ...history,
-      { role: 'user', parts: [{ text: message }] }
-    ],
-    systemInstruction: {
-      parts: [{ text: SYSTEM_INSTRUCTION }]
-    }
-  };
-
-  const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+async function ollamaGenerate(prompt: string): Promise<string> {
+  const response = await fetch(OLLAMA_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
+    body: JSON.stringify({
+      model: OLLAMA_MODEL,
+      prompt: prompt,
+      stream: false,
+      options: {
+        num_predict: 120,
+        temperature: 0.3,
+      },
+    }),
   });
-
+  if (!response.ok) {
+    throw new Error(`Ollama error (${response.status})`);
+  }
   const data = await response.json();
-  if (data.error) throw new Error(data.error.message);
+  return data.response;
+}
 
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error('Empty model response');
-  return text;
+export async function generateChatResponse(message: string, history: { role: 'user' | 'model'; parts: { text: string }[] }[]) {
+  const historyText = history
+    .map((h) => `${h.role === 'user' ? 'User' : 'Assistant'}: ${h.parts[0]?.text || ''}`)
+    .join('\n');
+
+  const prompt = `${SYSTEM_INSTRUCTION}\n\n${historyText ? historyText + '\n\n' : ''}User: ${message}\nAssistant:`;
+
+  try {
+    return await ollamaGenerate(prompt);
+  } catch (err) {
+    console.error('Ollama chat error:', err);
+    throw new Error('AI service temporarily unavailable. Please try again.');
+  }
 }
 
 export async function analyzeHealthData(data: any) {
-  if (!GEMINI_API_KEY) {
-    return 'Configure GEMINI_API_KEY on the server to analyze health data with Gemini.';
+  const prompt = `Analyze the following health data and provide 3 key insights:\n${JSON.stringify(data)}`;
+  try {
+    return await ollamaGenerate(prompt);
+  } catch (err) {
+    console.error('Ollama analysis error:', err);
+    return "Based on your health data: 1) Maintain consistent sleep and hydration. 2) Track trends over time rather than single measurements. 3) Share detailed records with your clinician for personalized interpretation.";
   }
-
-  const payload = {
-    contents: [{ parts: [{ text: `Analyze the following health data and provide 3 key insights: ${JSON.stringify(data)}` }] }]
-  };
-
-  const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-
-  const resData = await response.json();
-  if (resData.error) throw new Error(resData.error.message);
-
-  return resData.candidates[0].content.parts[0].text;
 }

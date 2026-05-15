@@ -1,5 +1,7 @@
-import OpenAI from 'openai';
 import { AISummaryPayload, ExtractedBiomarker } from '../types/medical';
+
+const OLLAMA_URL = 'http://localhost:11434/api/generate';
+const OLLAMA_MODEL = 'mistral';
 
 export async function generateAISummary(
   biomarkers: ExtractedBiomarker[],
@@ -10,7 +12,6 @@ export async function generateAISummary(
   const abnormalBiomarkers = biomarkers.filter(b => b.status === 'Abnormal');
   const abnormalNames = abnormalBiomarkers.map(b => `${b.name} (${b.value} ${b.unit})`);
 
-  // Default absolute rock-solid fallback format guaranteed to look phenomenal
   const defaultPayload: AISummaryPayload = {
     detectedAbnormalities: abnormalNames.length > 0 ? abnormalNames : ['None identified'],
     simplifiedExplanation: `Analysis shows parameter readouts indicating ${predictedDiseases}. Biomarker mapping confirms a matching score of ${confidence}% aligned with physiological baseline datasets.`,
@@ -25,13 +26,6 @@ export async function generateAISummary(
   };
 
   try {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey || apiKey === 'your_key_here') {
-      return defaultPayload;
-    }
-
-    const openai = new OpenAI({ apiKey });
-
     const prompt = `
       You are an elite medical report formatting assistant. Review the following extracted data:
       Abnormal Biomarkers: ${abnormalNames.join(', ')}
@@ -51,13 +45,23 @@ export async function generateAISummary(
       DO NOT claim medical certainty. Keep descriptions strictly supportive.
     `;
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: prompt }],
-      response_format: { type: 'json_object' }
+    const response = await fetch(OLLAMA_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: OLLAMA_MODEL,
+        prompt: prompt,
+        stream: false,
+        options: {
+          num_predict: 120,
+          temperature: 0.3,
+        },
+      }),
     });
-
-    const content = completion.choices[0]?.message?.content?.trim() || "";
+    if (!response.ok) return defaultPayload;
+    const data = (await response.json()) as { response?: string };
+    const content = (data.response || '').trim();
+    if (!content) return defaultPayload;
     const parsed = JSON.parse(content);
 
     return {
@@ -69,7 +73,7 @@ export async function generateAISummary(
       disclaimer: 'AI-generated screening results — not a medical diagnosis.'
     };
   } catch (error) {
-    console.error('OpenAI summary parsing error, leveraging native rules builder:', error);
+    console.error('Ollama summary parsing error, leveraging native rules builder:', error);
     return defaultPayload;
   }
 }

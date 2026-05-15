@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GlassCard } from '../../components/Common';
 import { useApp } from '../../context/AppContext';
@@ -11,16 +11,29 @@ import { cn } from '../../lib/utils';
 
 export default function PregnancyReports() {
   const { profile, records: fallbackRecords } = useApp();
-  const { reports, fetchReports } = useHealthStore();
+  const { reports, fetchReports, uploadReport } = useHealthStore();
   const [activeView, setActiveView] = useState<'Analysis' | 'Meds'>('Analysis');
   const [isUploading, setIsUploading] = useState(false);
   const [scanQuery, setScanQuery] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useState(() => {
+  useEffect(() => {
     fetchReports();
-  });
+  }, []);
 
   const allReports = reports && reports.length > 0 ? reports : fallbackRecords;
+
+  const handleFileSelect = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setIsUploading(true);
+    try {
+      await uploadReport(files[0], files[0].name, 'Ultrasound');
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   if (!profile || !profile.isPregnant) return null;
 
@@ -63,16 +76,17 @@ export default function PregnancyReports() {
           {activeView === 'Analysis' && (
             <motion.div key="analysis" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
               
+              <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={(e) => handleFileSelect(e.target.files)} />
               {/* UPLOAD ZONE */}
-              <GlassCard className="p-10 !rounded-[3rem] border-2 border-dashed border-[#FF8BA7]/40 bg-white/40 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-[#FFF5F2]/50 transition-colors group relative overflow-hidden">
+              <GlassCard className="p-10 !rounded-[3rem] border-2 border-dashed border-[#FF8BA7]/40 bg-white/40 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-[#FFF5F2]/50 transition-colors group relative overflow-hidden" onClick={() => fileInputRef.current?.click()}>
                 <div className="absolute inset-0 bg-gradient-to-br from-[#FF8BA7]/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center text-[#FF8BA7] shadow-lg mb-6 group-hover:scale-110 transition-transform">
-                  <UploadCloud size={32} />
+                  {isUploading ? <Activity size={32} className="animate-spin" /> : <UploadCloud size={32} />}
                 </div>
-                <h3 className="text-2xl font-bold text-[#2E2528]">Upload Medical Reports</h3>
+                <h3 className="text-2xl font-bold text-[#2E2528]">{isUploading ? 'Analyzing...' : 'Upload Medical Reports'}</h3>
                 <p className="text-[#8A7B81] font-medium mt-2 max-w-sm">We support PDF, JPG, and PNG (Max 10MB). Upload your ultrasound scans, blood work, or prescriptions.</p>
                 <button className="mt-8 px-8 py-3 bg-[#FF8BA7] text-white font-bold rounded-full shadow-lg shadow-[#FF8BA7]/30 hover:scale-105 active:scale-95 transition-all">
-                  Choose Files
+                  {isUploading ? 'Processing...' : 'Choose Files'}
                 </button>
               </GlassCard>
 
@@ -89,7 +103,7 @@ export default function PregnancyReports() {
                         <div>
                           <p className="font-bold text-[#2E2528] text-sm">{file.title || file.name}</p>
                           <p className="text-xs text-[#8A7B81] mt-0.5">
-                            {file.date || (file.uploadedAt ? new Date(file.uploadedAt).toLocaleDateString() : 'Just now')}
+                            {file.date || (file.uploadedAt ? file.uploadedAt.split('T')[0] : 'Just now')}
                           </p>
                         </div>
                       </div>

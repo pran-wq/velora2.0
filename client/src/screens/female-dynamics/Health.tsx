@@ -33,8 +33,8 @@ export default function FemaleHealth() {
         <section className="space-y-6">
           <div className="flex justify-between items-end px-2">
             <h3 className="text-sm font-black uppercase tracking-widest text-[#8E7E8E] pl-2 border-l-4 border-[#FB7185]">Clinical Vitals</h3>
-            <button onClick={() => navigate('/insights')} className="text-[10px] font-black text-[#FB7185] uppercase tracking-widest hover:underline flex items-center gap-2">
-              Full History <ArrowRight size={12} />
+            <button onClick={() => navigate('/predict')} className="text-[10px] font-black text-[#FB7185] uppercase tracking-widest hover:underline flex items-center gap-2">
+              AI hub <ArrowRight size={12} />
             </button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">

@@ -2,20 +2,25 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, FileText, Pill, Lock, ChevronRight, Activity, Watch, Heart, Download, KeyRound, Fingerprint, UploadCloud, Camera, ScanLine, Sparkles } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useHealthStore } from '../stores/healthStore';
 import { cn } from '../lib/utils';
 import { GlassCard } from '../components/Common';
 
 export default function HealthVault() {
   const navigate = useNavigate();
-  const { profile } = useApp();
+  const { profile, records, meds } = useApp();
+  const healthStore = useHealthStore();
 
   const isFemale = profile?.gender === 'Female';
   const isPregnant = isFemale && profile?.isPregnant;
   const accent = isPregnant ? '#FF8BA7' : isFemale ? '#FC7A8B' : '#6366F1';
 
+  const recordCount = (records?.length || 0) + (healthStore.reports?.length || 0);
+  const medCount = meds?.length || 0;
+
   const vaultSections = [
-    { id: 'reports', label: 'Medical Records', count: '12 Files', icon: FileText, color: '#6366F1', path: '/reports?mode=timeline' },
-    { id: 'rx', label: 'Prescriptions', count: '3 Active', icon: Pill, color: '#10B981', path: '/reports?mode=prescriptions' },
+    { id: 'reports', label: 'Medical Records', count: `${recordCount || 5} Files`, icon: FileText, color: '#6366F1', path: '/reports?mode=timeline' },
+    { id: 'rx', label: 'Prescriptions', count: `${medCount || 3} Active`, icon: Pill, color: '#10B981', path: '/reports?mode=prescriptions' },
     { id: 'cards', label: 'Insurance & ID', count: '2 Cards', icon: ShieldCheck, color: '#EC4899', path: '/vault/insurance' },
   ];
 

@@ -679,9 +679,15 @@ export default function MaleProfile() {
           <div className="flex flex-col">
             <button 
               onClick={() => {
+                try {
+                  window.localStorage.removeItem('aether-profile');
+                  window.localStorage.removeItem('aether-onboarding');
+                  window.localStorage.removeItem('aether-disclaimer-agreed');
+                  window.sessionStorage.removeItem('aether-disclaimer-skipped-session');
+                } catch {}
                 setProfile({ ...DEFAULT_GUEST_PROFILE });
                 disconnectSocket();
-                navigate('/');
+                window.location.href = '/';
               }}
               className="w-full h-full p-10 rounded-[3rem] bg-white border border-slate-100 text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all flex flex-col items-center justify-center gap-6 group"
             >

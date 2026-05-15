@@ -1,6 +1,6 @@
 import { Component, ErrorInfo, ReactNode, createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { UserProfile, Medication, HealthRecord, HealthStats, Appointment, Vital } from './types';
-import { BrowserRouter, Navigate, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { BottomNav, PregnancyDock } from './components/Navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cn } from './lib/utils';
@@ -16,7 +16,6 @@ import SplashScreen from './screens/SplashScreen';
 import LoginFlow from './screens/LoginFlow';
 import Home from './screens/Home';
 import Health from './screens/Health';
-import Insights from './screens/Insights';
 import Profile from './screens/Profile';
 import Reports from './screens/Reports';
 import Reminders from './screens/Reminders';
@@ -28,6 +27,8 @@ import MentalWellness from './screens/MentalWellness';
 import HealthVault from './screens/HealthVault';
 import ConnectDevices from './screens/ConnectDevices';
 import DiseasePredictionTab from './screens/DiseasePredictionTab';
+import OutbreakIntelligence from './screens/OutbreakIntelligence';
+import MedicalImagingAI from './screens/MedicalImagingAI';
 
 // Bonding Screens
 import TalkingWithBaby from './screens/bonding/TalkingWithBaby';
@@ -310,8 +311,10 @@ export default function App() {
                 <Route path="/home" element={<Home />} />
                 <Route path="/health" element={<Health />} />
                 <Route path="/predict" element={<DiseasePredictionTab />} />
+                <Route path="/outbreak-intelligence" element={<OutbreakIntelligence />} />
+                <Route path="/medical-imaging" element={<MedicalImagingAI />} />
                 <Route path="/reports" element={<Reports />} />
-                <Route path="/insights" element={<Insights />} />
+                <Route path="/insights" element={<Navigate to="/predict" replace />} />
                 <Route path="/profile" element={<Profile />} />
                 <Route path="/reminders" element={<Reminders />} />
                 <Route path="/appointments" element={<Appointments />} />
