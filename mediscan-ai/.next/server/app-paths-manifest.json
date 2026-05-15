@@ -1,0 +1,12 @@
+{
+  "/api/compare/route": "app/api/compare/route.js",
+  "/api/upload/route": "app/api/upload/route.js",
+  "/api/history/route": "app/api/history/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/analyze/route": "app/api/analyze/route.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/history/page": "app/history/page.js",
+  "/page": "app/page.js",
+  "/reports/page": "app/reports/page.js",
+  "/compare/page": "app/compare/page.js"
+}
